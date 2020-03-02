@@ -1,0 +1,49 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package com.merkator.gkgexcel2geoserver;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+/**
+ *
+ * @author migue
+ */
+public class main {
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String[] args) {
+        GKGConnections connections =  new SerializeXMLConnections().deSerializeGkgConnections();
+        
+        if (args.length>0)
+        {
+            switch (args[0].toLowerCase())
+            {
+                case "serializeXML":  new SerializeXMLConnections().serialize(); break;
+                default: new ProcessGkgXLS(connections).startProcess();
+            }
+        } else
+        {
+             
+            //new SerializeXMLConnections().serialize(); 
+            new ProcessGkgXLS(connections).startProcess();
+        }
+        
+        
+    }
+
+    
+  
+   
+}
+        
+
+
+
+    
+

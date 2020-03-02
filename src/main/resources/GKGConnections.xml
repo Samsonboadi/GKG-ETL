@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<gkgConnections>
+    <postgresSQL>
+        <host>129.125.36.72</host>
+        <dname>gkg_testdb</dname>
+        <port>5435</port>
+        <user>postgres</user>
+        <password>vKupHKQBCfLze74B</password>
+        <schema>gkg_testdb</schema>
+    </postgresSQL>
+    <ogr2Ogr>
+        <path>C:\Program Files\QGIS 3.2\bin\ogr2ogr.exe</path>
+    </ogr2Ogr>
+    <geoserver>
+        <url>https://geoserverat.gegevensknooppuntgroningen.nl/geoserver</url>
+        <user>admin</user>
+        <password>I2*QiEeHLdfUys90~2&amp;S1GKG</password>
+    </geoserver>
+    <locationXLSX>D:\\Work\\GKG\\GKGExcel2Geoserver-xlsxdatasources\\Delfzijl-2019.xlsx</locationXLSX>
+</gkgConnections>

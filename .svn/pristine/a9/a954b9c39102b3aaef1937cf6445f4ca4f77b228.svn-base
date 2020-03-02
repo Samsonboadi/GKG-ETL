@@ -1,0 +1,357 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package com.merkator.gkgexcel2geoserver;
+
+import com.merkator.Xlsx.Lagen;
+import com.merkator.Xlsx.StructPerKlant;
+import com.merkator.Xlsx.XlsxStructure;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.io.UnsupportedEncodingException;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+/**
+ *
+ * @author migue
+ */
+public class ProcessGkgXLS {
+    
+    private GKGConnections connections;
+    private XlsxStructure xlslDoc;
+    public ProcessGkgXLS(GKGConnections connections)
+    {
+        this.connections = connections;
+        xlslDoc = new XlsxStructure();
+        
+    }
+    
+    private void generateOgrCommands()
+    {
+        PrintWriter writer = null;
+        try {
+            //ogr2ogr -overwrite -f PostgreSQL PG:"user=myuser password=mypassword dbname=wien_ogd" "WFS:http://data.wien.gv.at/daten/geoserver/ows?service=WFS&request=GetFeature&version=1.1.0&typeName=ogdwien:BEZIRKSGRENZEOGD&srsName=EPSG:4326"
+            StructPerKlant layers = xlslDoc.getServicesPerKlant().get(0);
+            
+            writer = new PrintWriter("C:\\temp\\"+layers.Klantnaam+"_ogr2ogr.cmd", "UTF-8");
+            writer.println("set GDAL_DATA=C:\\OSGeo4W64\\share\\gdal");
+                    
+                    
+            for (int i=0;i<layers.getLagen().size();i++)
+            {
+                Lagen laag =  layers.getLagen().get(i);
+                if ((laag.Kaartlaag!=null) && (laag.Url!=null) && (!laag.Kaartlaag.isEmpty())&&(!laag.Url.isEmpty()))
+                {
+                    
+                    if ((laag.Type != null) && (laag.Type.toLowerCase().contains("wfs")))
+                    {
+                        String commandOgr = connections.ogr2Ogr.path+" -overwrite -f PostgreSQL PG:\"";
+
+                        commandOgr +="host="+ connections.postgresSQL.host;  
+                        commandOgr +=" port="+ connections.postgresSQL.port;
+                        commandOgr +=" user="+connections.postgresSQL.user;
+                        commandOgr +=" password="+ connections.postgresSQL.password;
+                        commandOgr +=" dbname="+ connections.postgresSQL.dname;
+                        commandOgr += "\" ";
+
+                        commandOgr +=" \""+ laag.Url +"\"";
+                         
+                        String namen[] = laag.Kaartlaag.split("\\s+");
+                            String name ="";
+                            for (String namen1 : namen) {
+                                name += namen1.substring(0,1).toUpperCase() + namen1.substring(1).toLowerCase();
+                        }
+                        commandOgr +=" -nln "+ layers.Klantnaam+"."+name+"_"+layers.Klantnaam;
+                        
+                        writer.println(commandOgr);
+                    } 
+                    if ((laag.Type != null) && (laag.Type.toLowerCase().contains("arcgis")))
+                    {
+                       String commandOgr =  connections.ogr2Ogr.path+" -overwrite -f PostgreSQL PG:\"";
+
+                        commandOgr +="host="+ connections.postgresSQL.host;  
+                        commandOgr +=" port="+ connections.postgresSQL.port;
+                        commandOgr +=" user="+connections.postgresSQL.user;
+                        commandOgr +=" password="+ connections.postgresSQL.password;
+                        commandOgr +=" dbname="+ connections.postgresSQL.dname;
+                        commandOgr += "\" ";
+
+                        commandOgr +=" \""+ laag.Url +"\"";
+                         
+                        commandOgr +=" -nln "+ layers.Klantnaam+"."+laag.Kaartlaag.toLowerCase().replace(" ","")+"_"+layers.Klantnaam;
+
+                        writer.println(commandOgr);
+                        
+                    }
+                }
+            }
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(ProcessGkgXLS.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (UnsupportedEncodingException ex) {
+            Logger.getLogger(ProcessGkgXLS.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (Exception ex)
+        {
+            Logger.getLogger(ProcessGkgXLS.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        finally {
+            writer.close();
+        }
+        
+    }
+    
+      private void generateGeoserverCommands()
+    {
+        PrintWriter writer = null;
+        try {
+            
+            String codeduser = URLEncoder.encode(connections.geoserver.user, StandardCharsets.UTF_8.toString());
+            String codedpass = URLEncoder.encode(connections.geoserver.password, StandardCharsets.UTF_8.toString());
+            
+            //ogr2ogr -overwrite -f PostgreSQL PG:"user=myuser password=mypassword dbname=wien_ogd" "WFS:http://data.wien.gv.at/daten/geoserver/ows?service=WFS&request=GetFeature&version=1.1.0&typeName=ogdwien:BEZIRKSGRENZEOGD&srsName=EPSG:4326"
+            StructPerKlant layers = xlslDoc.getServicesPerKlant().get(0);
+            
+            writer = new PrintWriter("C:\\temp\\"+layers.Klantnaam+"_geoserver.cmd", "UTF-8");
+            
+            String previousThema = "";
+            String previousKlant = "";
+            //curl -v -u admin:M3rk@t0r.! -XPOST -H "Content-type: text/xml" -d "<workspace><name>%namespace%</name></workspace>" http://localhost:8081/geoserver/rest/workspaces
+            //curl -v -u admin:M3rk@t0r.! -XPOST  -H "Content-type: text/xml" -d "<dataStore><name>%namespace%</name><connectionParameters><host>localhost</host><port>5432</port><database>%namespace%</database><user>geomerk</user><passwd>pw4geomerk</passwd><dbtype>postgis</dbtype><entry key=\"Expose primary keys\">true</entry><entry key=\"schema\">wion</entry></connectionParameters></dataStore>" http://localhost:8081/geoserver/rest/workspaces/%namespace%/datastores
+            //curl -v -u admin:M3rk@t0r.! -XPOST -H "Content-type: text/xml" -d "<featureType><name>wion_data_line</name> <srs>EPSG:28992</srs> <nativeBoundingBox><minx>0</minx><maxx>999999</maxx><miny>0</miny><maxy>999999</maxy></nativeBoundingBox></featureType>" http://localhost:8081/geoserver/rest/workspaces/%namespace%/datastores/%namespace%/featuretypes
+
+            
+                 previousThema = "water";
+                         String cmdWsp = "curl -v -u "+ codeduser;
+                         cmdWsp+= ":"+ codedpass +" -XPOST -H \"Content-type: text/xml\" -d ";
+                         cmdWsp+= "\"<workspace><name>"+previousThema+"</name></workspace>\" ";
+                         cmdWsp+=  connections.geoserver.url+ "/rest/workspaces";
+                         writer.println(cmdWsp);
+                         
+            for (int i=0;i<layers.getLagen().size();i++)
+            {
+                
+                Lagen laag =  layers.getLagen().get(i);
+                
+                
+                
+                if ((laag.Kaartlaag!=null) && (laag.Url!=null) && (!laag.Kaartlaag.isEmpty())&&(!laag.Url.isEmpty()))
+                {
+                    /*
+                    if (!previousThema.equals(laag.Thema.toLowerCase()))
+                    {
+                         previousThema = laag.Thema.toLowerCase();
+                         String cmd = "curl -v -u "+ connections.geoserver.user;
+                         cmd+= ":\""+ connections.geoserver.password +" -XPOST -H \"Content-type: text/xml\" -d ";
+                         cmd+= "\"<workspace><name>"+previousThema+"</name></workspace>\"";
+                         cmd+=  connections.geoserver.url+ "/rest/workspaces";
+                         writer.println(cmd);
+                    }
+                    */
+                    
+                    if (!previousKlant.equals(layers.Klantnaam))
+                    {
+                        previousKlant = layers.Klantnaam;
+                        String cmd = "curl -v -u "+ codeduser;
+                       cmd+= ":"+ codedpass +" -XPOST -H \"Content-type: text/xml\" -d ";
+                       cmd+= "\"<dataStore><name>"+layers.Klantnaam+"</name><connectionParameters>";
+                       cmd+= "<host>"+connections.postgresSQL.host+"</host>";
+                       cmd+= "<port>"+connections.postgresSQL.port+"</port>";
+                       cmd+= "<database>"+connections.postgresSQL.dname+"</database>";
+                       cmd+= "<user>"+connections.postgresSQL.user+"</user>";
+                       cmd+= "<passwd>"+connections.postgresSQL.password+"</passwd>";
+                        cmd+="<dbtype>postgis</dbtype>";
+                        cmd+="<entry key=\\\"Expose primary keys\\\">true</entry><entry key=\\\"schema\\\">" +layers.Klantnaam+"</entry>";
+                        
+                        cmd+="</connectionParameters></dataStore>\" ";
+                        cmd+=  connections.geoserver.url+ "/rest/workspaces/"+previousThema+"/datastores";
+                         writer.println(cmd);
+                    }
+                    
+                    String namen[] = laag.Kaartlaag.split("\\s+");
+                    String name ="";
+                    for (String namen1 : namen) {
+                        name += namen1.substring(0,1).toUpperCase() + namen1.substring(1).toLowerCase();
+                    }
+                    //String name = laag.Kaartlaag.substring(0,1).toUpperCase() + laag.Kaartlaag.substring(1).toLowerCase();
+                    
+                    
+                       String cmd = "curl -v -u "+ codeduser;
+                       cmd+= ":"+ codedpass +" -XPOST -H \"Content-type: text/xml\" -d \"";
+                       cmd+= "<featureType><name>"+name +"_"+layers.Klantnaam+"</name><nativeName>"+name+"_"+layers.Klantnaam.toLowerCase()+"</nativeName> <srs>EPSG:28992</srs>";
+                       cmd+= "<nativeBoundingBox><minx>0</minx><maxx>999999</maxx><miny>0</miny><maxy>999999</maxy></nativeBoundingBox></featureType>\" ";
+                       cmd+=  connections.geoserver.url+ "/rest/workspaces/"+previousThema+"/datastores/"+layers.Klantnaam+"/featuretypes";
+                        writer.println(cmd);
+                    
+                       String style = "curl -v -u "+ codeduser;
+                       style+= ":"+ codedpass +" -XPUT  -H \"Content-type: text/xml\" -d \"";
+                       style+= "<layer><defaultStyle><name>"+name.toLowerCase()+"</name><workspace>"+previousThema+"</workspace></defaultStyle><enabled>true</enabled></layer>\" ";
+                       
+                       
+                       style+=  connections.geoserver.url+ "/rest/layers/"+previousThema+":"+name +"_"+layers.Klantnaam;
+                        writer.println(style);
+
+                        
+                        //curl -v -u admin:G3geven$Kn00ppunt  -XPUT -H "Content-type: text/xml" -d "<layer><defaultStyle><name>inlaat</name><workspace>water</workspace></defaultStyle><enabled>true</enabled></layer>" http://129.125.36.72:8080/geoserver/rest/layers/water:inlaat_hunzeenaas
+                  
+                }
+            }
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(ProcessGkgXLS.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (UnsupportedEncodingException ex) {
+            Logger.getLogger(ProcessGkgXLS.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (Exception ex)
+        {
+            Logger.getLogger(ProcessGkgXLS.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        finally {
+            writer.close();
+        }
+        
+    }
+    
+    
+    public void startProcess()
+    {
+        FileInputStream fis = null;
+    
+        try
+        {
+            
+            //System.out.println("test");
+            File myFile = new File(connections.locationXLSX);
+            fis = new FileInputStream(myFile);
+            // Finds the workbook instance for XLSX file 
+            XSSFWorkbook myWorkBook = new XSSFWorkbook (fis); // Return first sheet from the XLSX workbook
+            XSSFSheet mySheet = myWorkBook.getSheetAt(0); // Get iterator to all the rows in current sheet 
+            Iterator<Row> rowIterator = mySheet.iterator(); // Traversing over each row of XLSX file
+            int rownum = 1;
+            while (rowIterator.hasNext()) 
+            { 
+                
+                Row row = rowIterator.next(); // For each row, iterate through each columns
+                if (rownum==1)
+                {
+                    processFirstRow(row);
+                }
+                if (rownum>2)
+                {
+                    processDataRows(row);
+                }
+                
+                
+                rownum++;
+            }
+            generateOgrCommands();
+            generateGeoserverCommands();
+        //Read more: http://www.java67.com/2014/09/how-to-read-write-xlsx-file-in-java-apache-poi-example.html#ixzz4uSNt5CF6
+     } catch (FileNotFoundException ex) {
+        Logger.getLogger(main.class.getName()).log(Level.SEVERE, null, ex);
+     } catch (IOException ex) {
+        Logger.getLogger(main.class.getName()).log(Level.SEVERE, null, ex);
+     } finally {
+        try {
+            fis.close();
+        } catch (IOException ex) {
+            Logger.getLogger(main.class.getName()).log(Level.SEVERE, null, ex);
+        }
+     }
+    }
+    
+    private String cellStr(Cell cell)
+    {
+        if (cell.getCellType() == Cell.CELL_TYPE_STRING)
+        {
+                return cell.getStringCellValue();
+        }
+        
+        return null;
+    }
+    
+    private StructPerKlant getKlant(int cellNum)
+    {
+        if (cellNum<=2)
+        {
+            return null;
+        } else
+        {
+            cellNum = cellNum-2;
+            float calcNum = (float)cellNum/4;
+            int nr = (int) Math.abs(calcNum);
+            if ((cellNum % 4)!=0)
+            {
+                nr++;
+            }
+            return xlslDoc.getServicesPerKlant().get(nr-1);
+        }
+        
+        
+    }
+    
+    private void processDataRows(Row row)
+    {
+        
+               StructPerKlant klant =  xlslDoc.getServicesPerKlant().get(0);
+               
+               if (klant!=null)
+               {
+                    String klantnaam = klant.Klantnaam;
+                     
+                       Lagen laag = new Lagen();
+                       laag.Kaartlaag = cellStr(row.getCell(0,org.apache.poi.ss.usermodel.Row.CREATE_NULL_AS_BLANK));
+                       laag.Thema = cellStr(row.getCell(1,org.apache.poi.ss.usermodel.Row.CREATE_NULL_AS_BLANK));
+                       laag.Aanwezig =  cellStr(row.getCell(2,org.apache.poi.ss.usermodel.Row.CREATE_NULL_AS_BLANK));   
+                       laag.Type =      cellStr(row.getCell(3,org.apache.poi.ss.usermodel.Row.CREATE_NULL_AS_BLANK));
+                       laag.Metadata =  cellStr(row.getCell(4,org.apache.poi.ss.usermodel.Row.CREATE_NULL_AS_BLANK));   
+                       laag.Url =  cellStr(row.getCell(5,org.apache.poi.ss.usermodel.Row.CREATE_NULL_AS_BLANK));   
+                       klant.getLagen().add(laag);
+               }     
+                   
+            
+        
+    }
+    private void processFirstRow(Row row)
+    {
+        Iterator<Cell> cellIterator = row.cellIterator();
+        int cellnum = 0;
+        
+
+        while (cellIterator.hasNext())
+        { 
+            Cell cell = cellIterator.next();
+            if (cell.getCellType() == Cell.CELL_TYPE_STRING)
+            {
+                String waarde = cell.getStringCellValue();
+                if (!waarde.contains("PDOK waterschapen"))
+                {
+                    StructPerKlant klant = new StructPerKlant();
+                    klant.Klantnaam = waarde;
+                    xlslDoc.getServicesPerKlant().add(klant);
+                }
+            }
+            cellnum++;
+            
+            /*
+            switch (cell.getCellType())
+            {
+                case Cell.CELL_TYPE_STRING: System.out.print(cell.getStringCellValue() + "\t"); break;
+                case Cell.CELL_TYPE_NUMERIC: System.out.print(cell.getNumericCellValue() + "\t"); break;
+                case Cell.CELL_TYPE_BOOLEAN: System.out.print(cell.getBooleanCellValue() + "\t"); break;
+                default :
+            }*/
+        }
+        
+    }
+}

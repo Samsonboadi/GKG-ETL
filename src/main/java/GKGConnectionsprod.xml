@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<gkgConnections>
+    <postgresSQL>
+        <host>postgres_gkg</host>
+        <dname>gkg</dname>
+        <port>5432</port>
+        <user>postgres</user>
+        <password>vKupHKQBCfLze74B</password>
+        <schema>gkg_testdb</schema>
+    </postgresSQL>
+    <ogr2Ogr>
+        <path>C:\OSGeo4W64\bin\ogr2ogr.exe</path>
+        <host_ogr>gegevensknooppuntgroningen.nl</host_ogr>
+        <port_ogr>5432</port_ogr></ogr2Ogr>
+    <geoserver>
+        <url>https://gegevensknooppuntgroningen.nl</url>
+        <user>admin</user>
+        <password><![CDATA["I2*QiEeHLdfUys90~2&S1GKG"]]></password>
+    </geoserver>
+    <locationXLSX>C:\\Users\\boadi\\Desktop\\GKG\\Delfzijl.xlsx</locationXLSX>
+</gkgConnections>

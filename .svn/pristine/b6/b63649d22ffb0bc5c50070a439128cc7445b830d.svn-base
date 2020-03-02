@@ -1,0 +1,41 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package com.merkator.Xlsx;
+import com.merkator.Xlsx.StructPerKlant;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ *
+ * @author migue
+ */
+public class XlsxStructure {
+
+    /**
+     * @return the servicesPerKlant
+     */
+    public List<StructPerKlant> getServicesPerKlant() {
+        return servicesPerKlant;
+    }
+
+    /**
+     * @param servicesPerKlant the servicesPerKlant to set
+     */
+   /*
+    public void setServicesPerKlant(List<StructPerKlant> servicesPerKlant) {
+        this.servicesPerKlant = servicesPerKlant;
+    }*/
+
+   
+   private List<StructPerKlant> servicesPerKlant;
+   
+   public XlsxStructure()
+   {
+      servicesPerKlant = new ArrayList<StructPerKlant>();
+   }
+   
+ 
+}

@@ -1,0 +1,36 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package com.merkator.gkgexcel2geoserver;
+import javax.xml.bind.annotation.XmlRootElement;
+import com.merkator.gkgexcel2geoserver.GKGConnectionClasses.*;
+/**
+ *
+ * @author miguel
+ */
+
+@XmlRootElement
+public class GKGConnections {
+
+    public PostgresSQLConn postgresSQL;
+    public Ogr2OgrConn ogr2Ogr;
+    public GeoserverConn geoserver;
+    public String locationXLSX;
+    public GKGConnections() {
+        postgresSQL =  new PostgresSQLConn();
+        ogr2Ogr = new Ogr2OgrConn();
+        geoserver = new GeoserverConn();
+        
+    }
+        
+    
+   
+    
+   
+  
+  
+    
+    
+}

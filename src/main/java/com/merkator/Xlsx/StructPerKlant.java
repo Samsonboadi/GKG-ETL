@@ -1,0 +1,43 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package com.merkator.Xlsx;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * @author miguel and Boadi Samson
+ */
+public class StructPerKlant {
+	/**
+	 * @return the _lagen
+	 */
+	public List<Lagen> getLagen() {
+		return _lagen;
+	}
+
+	/**
+	 * @param _lagen the _lagen to set
+	 */
+	public void setLagen(List<Lagen> _lagen) {
+		this._lagen = _lagen;
+	}
+
+	public StructPerKlant() {
+		_lagen = new ArrayList<>();
+	}
+
+	/**
+	 * @return the _lagen
+	 */
+
+	/**
+	 * @param _lagen the _lagen to set
+	 */
+
+	public String Klantnaam;
+	private List<Lagen> _lagen;
+}

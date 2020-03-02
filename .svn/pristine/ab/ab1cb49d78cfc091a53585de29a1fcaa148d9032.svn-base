@@ -1,0 +1,20 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package com.merkator.Xlsx;
+
+/**
+ *
+ * @author migue
+ */
+public class Lagen {
+    public String Kaartlaag;
+    public String Thema;
+    public String Standaard;
+    public String Aanwezig;
+    public String Type;
+    public String Metadata;
+    public String Url;
+}
